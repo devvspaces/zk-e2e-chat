@@ -7,4 +7,8 @@ libs = ["dependencies"]
 forge-std = "1.9.4"
 "@openzeppelin-contracts" = "5.1.0"
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+[rpc_endpoints]
+holesky = "${HOLESKY_RPC_URL}"
+
+[etherscan]
+sepolia = { key = "${ETHERSCAN_API_KEY}" }

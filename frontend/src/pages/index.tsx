@@ -8,12 +8,35 @@ import {
   InputAddon,
   Group,
   IconButton,
+  For,
 } from "@chakra-ui/react";
 import { LuSearch, LuShoppingCart } from "react-icons/lu";
 import { EmptyState } from "@/components/ui/empty-state";
-import { InputGroup } from "@/components/ui/input-group";
+import ZkChat from "../../../backend/out/ZkChat.sol/ZkChat.json";
+import { CA } from "../lib/constants";
+import { User } from "../lib/interface";
+import { useAccount, useReadContract } from "wagmi";
 
 const Home: NextPage = () => {
+  const { address } = useAccount();
+  console.log("address", address)
+  const {
+    data: _profileData,
+  } = useReadContract({
+    abi: ZkChat.abi,
+    address: CA,
+    args: [address],
+    functionName: "getUser",
+  });
+  const profileData = _profileData as User | undefined;
+  const { data: _users } = useReadContract({
+    abi: ZkChat.abi,
+    address: CA,
+    functionName: "getPublicUsers",
+  });
+  console.log("_users", _users)
+  console.log("profileData", profileData)
+  const publicUsers = ((_users || []) as User[]).filter((user) => user.username && profileData?.username != user.username);
   return (
     <div className={styles.container}>
       <Head>
@@ -31,7 +54,7 @@ const Home: NextPage = () => {
           <a href="https://nextjs.org">Aligned!</a>
         </h1>
 
-        <Group attached w={'100%'} maxW={'500px'} mt={5} mb={10}>
+        <Group attached w={"100%"} maxW={"500px"} mt={5} mb={10}>
           <Input size="xl" placeholder="Search for user address" />
           <IconButton size="xl" aria-label="Search database">
             <LuSearch />
@@ -39,17 +62,25 @@ const Home: NextPage = () => {
         </Group>
 
         <div className={styles.grid}>
-          <a className={styles.card} href="https://rainbowkit.com">
-            <h2>Netrobe &rarr;</h2>
-            <p>Code + Eat + Sleep.</p>
-          </a>
+          <For
+            each={publicUsers}
+          >
+            {(user, index) => (
+              <a key={index} className={styles.card} href={`/chats?selected=${user.username}`}>
+              <h2>{user.username} &rarr;</h2>
+              <p>{user.bio}</p>
+            </a>
+            )}
+          </For>
         </div>
 
-        <EmptyState
-          icon={<LuShoppingCart />}
-          title="No public users found"
-          description="No public users found. Please try again later."
-        />
+        {publicUsers.length == 0 && (
+          <EmptyState
+            icon={<LuShoppingCart />}
+            title="No public users found"
+            description="No public users found. Please try again later."
+          />
+        )}
       </main>
     </div>
   );
